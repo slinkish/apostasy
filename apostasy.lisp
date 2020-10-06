@@ -23,6 +23,7 @@
 (defparameter *abuse-flood-flag* 0)
 (defparameter *abuse-pen-box* nil)
 
+(defparameter *bot-repo* "https://github.com/slinkish/apostasy")
 (defparameter *bot-thread* nil)
 (defparameter *bot-owner* nil)
 (defparameter *bot-break* nil)
@@ -31,6 +32,7 @@
 (defparameter *bot-cmds* '(sheep?
 			   piss-off
 			   master
+			   soul
 			   accept
 			   no
 			   cancel
@@ -330,6 +332,15 @@
 	   (setf *bot-owner* (concatenate 'string nick "@" host))
 	   (irc-send-privmsg server-stream target (concatenate 'string nick ", my liege!")))
 	  (t (irc-send-privmsg server-stream target (concatenate 'string nick ", I follow only " *bot-owner*))))))
+
+(defun bot-cmd-soul (server-stream &rest cmd-args)
+  (let ((host (nth 0 cmd-args))
+	(nick (nth 1 cmd-args))
+	(target (nth 2 cmd-args)))
+    (irc-send-privmsg server-stream target (concatenate 'string
+							nick
+							", all is revealed at "
+							*bot-repo*))))
 
 (defun bot-cmd-cancel (server-stream &rest cmd-args)
   (let ((host (nth 0 cmd-args))
