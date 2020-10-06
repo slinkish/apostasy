@@ -4,6 +4,7 @@
 
 (defparameter *irc-server* "irc.server.net")
 (defparameter *irc-server-port* 6667)
+(defparameter *irc-server-timeout* 500)
 (defparameter *irc-password* nil)
 (defparameter *irc-nick* "apostate-bot")
 (defparameter *irc-user* "apostate-bot")
@@ -114,13 +115,15 @@
 	     (cond (stream-data-p
 		    (let ((raw-server-msg (irc-server-read *server-stream*)))
 		      (cond ((eq (search ":" raw-server-msg) 0)
-			     (bot-read raw-server-msg *bot-debug*))
+			     (bot-read raw-server-msg *bot-debug*)
+			     (setf active-time (get-universal-time)))
 			    ((eq (search "PING :" raw-server-msg) 0) 
 			     (irc-ping-reply *server-stream* raw-server-msg active-delta *bot-debug*)
 			     (setf active-time (get-universal-time)))
-			    (t (format t "UNKNOWN MSG: ~A~%" raw-server-msg)))))
+			    (t (format t "UNKNOWN MSG: ~A~%" raw-server-msg)
+			       (setf active-time (get-universal-time))))))
 		   (t
-		    (if (> active-delta 290)
+		    (if (> active-delta *irc-server-timeout*)
 			(progn
 			  (format t "Timeout: ~A seconds.~%" active-delta)
 			  (irc-server-reconnect)))))))
@@ -353,8 +356,7 @@
     (loop
        while (eq shot nil)
        do
-	 (let ((spin (random *r-chamber*))
-	       (player first)
+	 (let ((player first)
 	       (wait (+ (random 3) 1)))
 	   (cond ((equal chamber step)
 		  (sleep 1)
@@ -395,7 +397,7 @@
 						 first
 						 " picks up gun, "
 						 "brings it to "
-						 "their head and"))))))))
+						 "their head and then"))))))))
 
 (defun bot-cmd-r (server-stream &rest cmd-args)
   (let ((nick (nth 1 cmd-args))
@@ -474,10 +476,9 @@
 						" <<< ! "))
 		 (irc-send-privmsg server-stream target
 				   (concatenate 'string
-						"They pick up the gun, spin "
-						"the barrel for good measure"
-						", bring it to "
-						"their head and"))
+						"They pick up the gun and "
+						"bring it to their head "
+						"and then"))
 		 (roulette server-stream target *r-challenged* *r-challenger*))
 	       (progn
 		 (irc-send-privmsg server-stream target
@@ -487,17 +488,16 @@
 						" <<< ! "))
 		 (irc-send-privmsg server-stream target
 				   (concatenate 'string
-						"They pick up the gun, spin "
-						"the barrel for good measure"
-						", bring it to "
-						"their head and"))
+						"They pick up the gun and "
+						"bring it to their head "
+						"and then"))
 		 (roulette server-stream target *r-challenger* *r-challenged*)))
 	   (setf *r-timer* (- (get-universal-time) (+ *r-timeout* 10)))))))
 
 (defun bot-cmd-no (server-stream &rest cmd-args)
   (let ((nick (nth 1 cmd-args))
 	(target (nth 2 cmd-args)))
-    (cond ((or (> (- (get-universal-time) *r-timer*) 300)
+    (cond ((or (> (- (get-universal-time) *r-timer*) *r-timeout*)
 	       (not (equal *r-challenged* nick)))
 	   (irc-send-privmsg server-stream target
 			     (concatenate 'string
