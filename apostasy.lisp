@@ -248,7 +248,9 @@
 	 (target (if (equal src-target *irc-nick*)
 		      src-nick
 		      src-target))
-	 (src-msg (string-right-trim (subseq params (1+ (search ":" params)))))
+	 (src-msg (string-right-trim
+                   '(#\Space #\Tab)
+                   (subseq params (1+ (search ":" params)))))
 	 (bot-cmd-p (if (equal 0 (search "," src-msg))
 			t))
 	 (bot-params-p (if (and bot-cmd-p (search " " src-msg))
