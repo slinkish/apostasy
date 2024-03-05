@@ -15,6 +15,7 @@
 (defparameter *server-socket* nil)
 (defparameter *server-stream* nil)
 (defparameter *bot-random-state* (make-random-state t))
+(defparameter *loop-throttle* .3)
 
 (defparameter *abuse-cur-input* nil)
 (defparameter *abuse-cur-time* 0)
@@ -128,7 +129,8 @@
 		    (if (> active-delta *irc-server-timeout*)
 			(progn
 			  (format t "Timeout: ~A seconds.~%" active-delta)
-			  (irc-server-reconnect)))))))
+			  (irc-server-reconnect)))))
+             (sleep *loop-throttle*)))
       (when *irc-channel-list*
 	(irc-channel-quit *server-stream* *irc-channel-list*))
       (irc-server-quit))))
